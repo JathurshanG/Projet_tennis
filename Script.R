@@ -132,4 +132,17 @@
     ggtitle("Matchs gagnés et matchs perdus par tournoi du grand chelem") +
     labs(fill = "Résultat")
  
+ 
+ 
+ #Evolution au classement ATP depuis les debuts en professionnel
+ atp_classement %>%
+    filter(player == 105223) -> classement_delpo   #classement hebdomadaire
+ 
+ classement_delpo <- classement_delpo[-c(1:31),]   #on ne garde qu'a partir de 2005
+ 
+ ggplot(classement_delpo, aes(x = ranking_date, y = rank)) + 
+    labs(title = "Evolution du classement ATP de Del Potro depuis 2005", x = "Années", y = "Classement") +
+    geom_line(col = "blue") + 
+    scale_y_reverse() +
+    geom_hline(yintercept = 100, col = "red")
 
