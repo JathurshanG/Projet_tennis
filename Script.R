@@ -146,3 +146,158 @@
     scale_y_reverse() +
     geom_hline(yintercept = 100, col = "red")
 
+
+
+
+
+#rm(list = ls())
+library(fmsb)
+# Qui est Del Potro -------------------------------------------------------
+rm(list=c('lst','lst_data','lst_names',"lst_tib"))
+library(DT)
+
+player %>%
+  mutate(Hand=case_when(Hand=="R"~"Droitier",
+                        Hand=="L"~"Gaucher",
+                        Hand=='A'~"Ambidextre",
+                        Hand=="U"~"Inconnu"))->a
+
+a<-a[which(player$id==id_joueur),]
+b=fread("https://sql.sh/ressources/sql-pays/sql-pays.csv",encoding = 'UTF-8')
+b<- b[which(b$V4==a$Nat),5]
+Nom<-a$Prenom
+Prenom<-a$Nom
+DTN <- format(a$Birth,"%d %B %Y")
+Age=year(today())-year(a$Birth)
+Main <- a$Hand
+Nationalite<-b$V5
+a<-(paste("le Joueur selectionné est ",a$Nom, a$Prenom,
+          "né le ",format(a$Birth,"%d %B %Y"),".","Il est ",a$Hand,".","il vient de ",b$V5))
+a
+rm(list=c("a","b"))
+
+
+#Analyse du premier match !
+atp %>%
+  filter(winner_id==id_joueur | loser_id==id_joueur) %>%
+  summarise(tourney_date)%>%
+  min() %>%
+  ymd() -> b
+#Le premier match de Del est le 2006-01-03 perdu 
+
+
+# Evolution de la Cariière del Del Gang -----------------------------------
+atp_classement %>%
+  filter(player==id_joueur) %>%
+  ggplot(aes(x=ranking_date,y=points))+
+  geom_line()+
+  theme_grey()+
+  xlab("Date")+
+  ylab("Point Marquée")+
+  ggtitle(paste('Graphique representant les points Marqué Par',Lastname,sep=" ")) -> Graph_point
+Graph_point
+
+
+
+#Graphique utile
+potro_radar <- data.frame(
+  "Rafael" = c(1,0,0.33),
+  "Federer" = c(1,0,0.28),
+  "Djokovic" = c(1,0,0.2))
+radarchart(potro_radar,axistype=1 , 
+           
+           #custom polygon
+           pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
+           
+           #custom the grid
+           cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,20,5), cglwd=0.8,
+           
+           #custom labels
+           vlcex=0.8 
+)
+title("Del Potro face aux top3")
+
+library(tidyverse)
+
+#on trie les matchs par surfaces
+battue<-filter(joueur, surface == "Clay")
+nrow(battue) #121 matchs sur terre battue
+battue<-filter(joueur, surface == "Clay" & winner_id == 105223)  #84 victoires
+nrow(battue)
+
+
+tapis<-filter(joueur, surface == "Carpet")
+nrow(tapis)#8 matchs sur tapis
+
+tapis<-filter(joueur, surface == "Capert" & winner_id == 105223) #6 victoires
+nrow(tapis)
+
+
+dur<-filter(joueur, surface == "Hard")
+view(dur)
+nrow(dur) #433 matchs sur dur
+dur<-filter(joueur, surface == "Hard" & winner_id == 105223) #313 victoires
+nrow(dur)
+
+herbe<-filter(joueur, surface == "Grass")
+nrow(herbe) #58 macths sur herbe
+herbe<-filter(joueur, surface == "Grass" & winner_id ==105223)#40 victoires
+nrow(herbe)
+
+del_radar <- data.frame(     #1 et 0 sont les bornes max et min , 1 et 0 parce qu'on
+  "Herbe" = c(1,0,40/58),   # a fait le nbre de victoire sur le nbre total de match
+  "Dur" = c(1,0,313/433),   # on pouvait multiplier par 100 
+  "Terre battue" = c(1,0,84/121),
+  "Tapis"= c(1,0,6/8)
+)
+view(del_radar)
+library(fmsb)
+radarchart(del_radar,axistype=1 , 
+           
+           #custom polygon
+           pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
+           
+           #custom the grid
+           cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,20,5), cglwd=0.8,
+           
+           #custom labels
+           vlcex=0.8 
+)
+title("Caractéristiques de Del Potro")
+
+library(tidyverse)
+View(joueur)
+#ses meilleurs années, on suppose que ses meilleures années sont celles 
+#où il est dans top 5 
+joueur%>%
+  filter(winner_rank <= 5 & winner_id == 105223)-> annee_meil ##on a ses matchs où il gagnait et etait dans le top10 
+view(annee_meil) 
+str(annee_meil$tourney_id)
+unique(annee_meil$tourney_id)
+#voir la 1e colonne, les dates sont 2009;2010;2013;2014;2018;2019
+joueur%>%
+  filter(loser_id == 105223 & winner_rank <= 5)-> los5
+
+#Nombre de points par tournoi gagné
+#roland garros rg
+joueur%>%
+  filter(tourney_name == "Roland Garros" & winner_id == 105223) ->rga
+view(rga$winner_rank_points)
+liste<-rga$winner_rank_points #on peut faire la moyenne
+moy<-mean(liste) #3348,32 points en moy au roland garos
+
+#autralie open
+joueur%>%
+  filter(tourney_name == "Australian Open" & winner_id == 105223) ->aop
+moy_aop<-mean(aop$winner_rank_points) #3495 points en moy en Open Aust
+
+#Wimbledon
+joueur%>%
+  filter(tourney_name == "Wimbledon" & winner_id == 105223) ->wbn
+moy_wbn<-mean(wbn$winner_rank_points) #2996,28 points en moy en winbledon
+
+#Us open
+joueur%>%
+  filter(tourney_name == "US Open" & winner_id == 105223) ->uso
+moy_uso<-mean(uso$winner_rank_points)#3102,77 points en moy en US open
+
