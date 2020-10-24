@@ -2,6 +2,8 @@
 
  # 0 - Packages ------------------------------------------------------------
  library(tidyverse)
+ library(fmsb)
+ library(DT)
  
  # 1 - Performances d'un joueur -------------------------------------------
  
@@ -15,7 +17,7 @@
    select(id) %>% 
    as.numeric() -> id_joueur   #numero 105 223
  
- #On recupere tous les matchs joues par Delpo au cours de sa carriere
+ #On recupere tous les matchs joues par le joueur au cours de sa carriere
  atp %>%
    filter(winner_id == id_joueur | loser_id == id_joueur) -> joueur  #620 matchs en tout
  
@@ -148,13 +150,11 @@
 
 
 
+# 3 - Identité et parcours du joueur --------------------------------------------------
 
-
-#rm(list = ls())
-library(fmsb)
-# Qui est Del Potro -------------------------------------------------------
 rm(list=c('lst','lst_data','lst_names',"lst_tib"))
-library(DT)
+ 
+#Affichage de l'identité
 
 player %>%
   mutate(Hand=case_when(Hand=="R"~"Droitier",
@@ -163,16 +163,19 @@ player %>%
                         Hand=="U"~"Inconnu"))->a
 
 a<-a[which(player$id==id_joueur),]
+
 b=fread("https://sql.sh/ressources/sql-pays/sql-pays.csv",encoding = 'UTF-8')
 b<- b[which(b$V4==a$Nat),5]
+
 Nom<-a$Prenom
 Prenom<-a$Nom
 DTN <- format(a$Birth,"%d %B %Y")
 Age=year(today())-year(a$Birth)
 Main <- a$Hand
 Nationalite<-b$V5
-a<-(paste("le Joueur selectionné est ",a$Nom, a$Prenom,
-          "né le ",format(a$Birth,"%d %B %Y"),".","Il est ",a$Hand,".","il vient de ",b$V5))
+
+a<-(paste("Le joueur selectionné est ",a$Nom, a$Prenom,
+          ", né le ",format(a$Birth,"%d %B %Y"),".","Il est ",a$Hand,".","et il vient de ",b$V5))
 a
 rm(list=c("a","b"))
 
@@ -183,18 +186,18 @@ atp %>%
   summarise(tourney_date)%>%
   min() %>%
   ymd() -> b
-#Le premier match de Del est le 2006-01-03 perdu 
 
 
-# Evolution de la Cariière del Del Gang -----------------------------------
+#Parcours en carrière professionnelle
+#Points gagnés
 atp_classement %>%
   filter(player==id_joueur) %>%
   ggplot(aes(x=ranking_date,y=points))+
   geom_line()+
   theme_grey()+
   xlab("Date")+
-  ylab("Point Marquée")+
-  ggtitle(paste('Graphique representant les points Marqué Par',Lastname,sep=" ")) -> Graph_point
+  ylab("Points Marqués")+
+  ggtitle(paste('Graphique représentant les points marqués par',Lastname,sep=" ")) -> Graph_point
 Graph_point
 
 
@@ -203,7 +206,9 @@ Graph_point
 potro_radar <- data.frame(
   "Rafael" = c(1,0,0.33),
   "Federer" = c(1,0,0.28),
-  "Djokovic" = c(1,0,0.2))
+  "Djokovic" = c(1,0,0.2)
+)
+
 radarchart(potro_radar,axistype=1 , 
            
            #custom polygon
@@ -215,9 +220,8 @@ radarchart(potro_radar,axistype=1 ,
            #custom labels
            vlcex=0.8 
 )
-title("Del Potro face aux top3")
+title("Résultats face au Top3")
 
-library(tidyverse)
 
 #on trie les matchs par surfaces
 battue<-filter(joueur, surface == "Clay")
@@ -251,7 +255,7 @@ del_radar <- data.frame(     #1 et 0 sont les bornes max et min , 1 et 0 parce q
   "Tapis"= c(1,0,6/8)
 )
 view(del_radar)
-library(fmsb)
+
 radarchart(del_radar,axistype=1 , 
            
            #custom polygon
@@ -263,14 +267,13 @@ radarchart(del_radar,axistype=1 ,
            #custom labels
            vlcex=0.8 
 )
-title("Caractéristiques de Del Potro")
+title("Caractéristiques du joueur")
 
-library(tidyverse)
 View(joueur)
 #ses meilleurs années, on suppose que ses meilleures années sont celles 
 #où il est dans top 5 
 joueur%>%
-  filter(winner_rank <= 5 & winner_id == 105223)-> annee_meil ##on a ses matchs où il gagnait et etait dans le top10 
+  filter(winner_rank <= 5 & winner_id == 105223)-> annee_meil #on a ses matchs où il gagnait et etait dans le top10 
 view(annee_meil) 
 str(annee_meil$tourney_id)
 unique(annee_meil$tourney_id)
