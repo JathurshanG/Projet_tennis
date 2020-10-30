@@ -176,17 +176,34 @@
    geom_text(mapping = aes(y = -0.1, label = Total), size = 2) +
    labs(fill = "Résultat")
  
- #Comparaison avec le top 3 mondial (A AUTOMATISER)
- radar1 <- data.frame(
-   "Rafael" = c(1,0,0.33),
-   "Federer" = c(1,0,0.28),
-   "Djokovic" = c(1,0,0.2))
+ #Comparaison avec le top 3 mondial
+ bilan_opp %>%
+    filter(opponent %in% c('Roger Federer', 'Rafael Nadal', 'Novak Djokovic')) %>%
+    mutate(ratio = Won/Total,
+           max = 1,
+           min = 0) %>%
+    select('opponent','max','min','ratio') -> radar1
  
- radarchart(radar1,axistype=1 , 
+ #barplot
+ radar1 %>%
+    ggplot(mapping = aes(x = opponent, y=ratio*100, fill = opponent)) +
+    geom_col() +
+    labs(y = "Pourcentage de matchs gagnés", x = "Adversaire") +
+    ggtitle("Matchs gagnés contre le top 3 mondial") +
+    labs(fill = "Adversaire")
+ 
+ #radarchart
+ radar1 <- transpose(radar1)
+ colnames(radar1) <- radar1[1,]
+ radar1 <- radar1[-1,]
+ str(radar1)
+ radar1 <-map_dfr(radar1, as.numeric)
+ radarchart(radar1,axistype=1 ,
+            seg = 10,
             #custom polygon
-            pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
+            pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=2 , 
             #custom the grid
-            cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,20,5), cglwd=0.8,
+            cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,100,10), cglwd=0.8,
             #custom labels
             vlcex=0.8 ) +
    title("Résultats face au Top3")
