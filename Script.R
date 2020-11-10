@@ -11,6 +11,8 @@
  library(tidyverse)
  library(fmsb)
  library(data.table)
+ library(rvest)
+ library(magick)
  
  # 2 - Récupération des données du joueur selectionné --------------------------------------------
  
@@ -363,6 +365,17 @@ unique(best_annee$ranking_date)
     scale_y_reverse() +
     geom_hline(yintercept = 100, col = "red")
 
-
+# 10-  Photo du Joueurs --------------------------------------------------------
+ a<-stringr::str_replace(Firstname," ", "_") 
+ b<-stringr::str_replace(Lastname," ", "_")
+ lien<-paste0("https://fr.wikipedia.org/wiki/",a,"_",b)
+ myurl <- read_html (lien)
+ mynode <- myurl %>% 
+    html_node(".infobox_v2 img")
+ link <- html_attr(mynode, "src")
+ link<-paste0("http:",link)
+ img<-image_read(link)
+ image_ggplot(img)
+rm(a,b,myurl,mynode,lien,link) 
 
 
