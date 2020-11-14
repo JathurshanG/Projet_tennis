@@ -99,9 +99,9 @@
  Main <- a$Hand
  Nationalite <- b$V5
  
- a <- paste("Le joueur selectionné est",a$Nom, a$Prenom,
+ identite <- paste("Le joueur selectionné est",a$Nom, a$Prenom,
              ", né le",format(a$Birth,"%d %B %Y"),".","Il est",a$Hand,"et il vient de",b$V5)
- a
+ identite
  
  cat("Nom :",a$Nom, "\nPrénom :", a$Prenom,"\nDate de naissance :",format(a$Birth,"%d %B %Y"),
      "\nPays d'origine :",b$V5,"\nMain dominante :",a$Hand)
@@ -341,7 +341,6 @@
  formattable(tab_grand_chelem) 
  
  #Résultats des grands chelems par année
- rm(annee)
  joueur %>%
    filter(tourney_name %in% c('Roland Garros', 'Australian Open', 'Wimbledon', 'US Open')) %>%
    mutate(year = str_sub(tourney_id, 1, 4),
@@ -395,7 +394,6 @@
            Tournoi = tourney_name,
            'Année' = year,
            'Nombre de participation au tournoi' = Nb) -> tab_chelem_annee
- tab_chelem_annee
  formattable(tab_chelem_annee) 
  
  
@@ -417,8 +415,7 @@
    theme_grey()+
    xlab("Date")+
    ylab("Points Marqués")+
-   ggtitle(paste('Points marqués par',Lastname,'durant sa carrière professionnelle.',sep=" ")) -> Graph_point
- Graph_point
+   ggtitle(paste('Points marqués par',Lastname,'durant sa carrière professionnelle.',sep=" "))
  
  #partie suivante à retravailler pour voir si on peut sortir des graphs intéressants
 
@@ -458,7 +455,6 @@
  joueur%>%
     filter(loser_id == id_joueur & winner_rank <= 5) %>%
     select("winner_name", "winner_rank","loser_name","winner_id","loser_id","tourney_name","tourney_date") -> los5
- View(los5)
  
  #Année où le joueur est dans le top 3
  atp_classement %>%
