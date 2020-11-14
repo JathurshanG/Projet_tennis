@@ -9,10 +9,11 @@
  
  # 1 - Packages ----------------------------------------------------------------------------------
  library(tidyverse)
- library(fmsb)
  library(data.table)
+ library(fmsb)
  library(rvest)
  library(magick)
+ library(formattable) 
  
  # 2 - Récupération des données du joueur selectionné --------------------------------------------
  
@@ -98,15 +99,22 @@
  Main <- a$Hand
  Nationalite <- b$V5
  
- a <- (paste("Le joueur selectionné est",a$Nom, a$Prenom,
-             ", né le",format(a$Birth,"%d %B %Y"),".","Il est",a$Hand,"et il vient de",b$V5))
+ a <- paste("Le joueur selectionné est",a$Nom, a$Prenom,
+             ", né le",format(a$Birth,"%d %B %Y"),".","Il est",a$Hand,"et il vient de",b$V5)
  a
+ 
+ cat("Nom :",a$Nom, "\nPrénom :", a$Prenom,"\nDate de naissance :",format(a$Birth,"%d %B %Y"),
+     "\nPays d'origine :",b$V5,"\nMain dominante :",a$Hand)
+
+ 
  rm(list=c("a","b"))
  
  # 5 - Graphiques sur les surfaces de jeu --------------------------------------------------------
  
  #Repartition des matchs joues en fonction de la surface, sur toute sa carriere
- surfaces %>%
+ 
+ ### Les 4 surfaces
+  surfaces %>%
    mutate(textpos = cumsum(N) - N/2) %>%
    ggplot(mapping = aes(x = 1, y = N, fill = Surface)) +
    geom_col(position = 'stack', width = 1) +
@@ -118,6 +126,7 @@
                  size=5, 
                  position = position_stack(vjust=0.6)) +
    ggtitle("Nombre de matchs joués en fonction du terrain.")
+ 
  
  #Radarchart du pourcentage de matchs gagné par sufaces
  # On récupère les matchs gagnés en fonction de la surface
@@ -132,11 +141,19 @@
                               Surface == "Hard" ~ "Dur")) -> matchs_gagnes
  
  match_joue_gagne <- merge(surfaces,matchs_gagnes, by = "Surface")
+
  match_joue_gagne %>%
    mutate(max = 1, 
           min = 0, 
           rapport = G/N) %>%
    select('Surface','max','min','rapport') -> radar2
+ 
+ #tableau
+ radar2 %>%
+    select("Surface","rapport") %>%
+    mutate(rapport = round(rapport*100,2)) %>%
+    rename('Matchs gagnés (%)' = rapport) -> tab
+ formattable(tab) 
  
  #barplot
  radar2 %>%
@@ -161,11 +178,67 @@
             cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,100,10), cglwd=0.8,
             #custom labels
             vlcex=0.8 )
+
+ ### Que 3 surfaces
+ surfaces_3 <- as.data.frame(surfaces[-1,])
+ surfaces_3 %>%
+    mutate(textpos = cumsum(N) - N/2) %>%
+    ggplot(mapping = aes(x = 1, y = N, fill = Surface)) +
+    geom_col(position = 'stack', width = 1) +
+    coord_polar(theta = 'y', start = 0) +
+    scale_fill_discrete(type = c('Terre battue' = 'chocolate', 'Herbe' = 'chartreuse4', 'Dur' = "deepskyblue4")) + 
+    theme_void() +
+    geom_text(aes(y = textpos, 
+                  label = paste(N, ' (', round(N/sum(N)*100,1), '%' ,')', sep = '')),
+              size=5, 
+              position = position_stack(vjust=0.6)) +
+    ggtitle("Nombre de matchs joués en fonction du terrain.")
+ 
+ matchs_gagnes_3 <- as.data.frame(matchs_gagnes[-1,])
+ match_joue_gagne_3 <- merge(surfaces,matchs_gagnes_3, by = "Surface")
+ 
+ match_joue_gagne_3 %>%
+    mutate(max = 1, 
+           min = 0, 
+           rapport = G/N) %>%
+    select('Surface','max','min','rapport') -> radar3
+ 
+ #tableau
+ radar3 %>%
+    select("Surface","rapport") %>%
+    mutate(rapport = round(rapport*100,2)) %>%
+    rename('Matchs gagnés (%)' = rapport) -> tab_3
+ formattable(tab_3) 
+ 
+ #barplot
+ radar3 %>%
+    ggplot(mapping = aes(x = Surface, y=rapport*100, fill = Surface)) +
+    geom_col() +
+    scale_fill_discrete(type = c('Terre battue' = 'chocolate', 'Herbe' = 'chartreuse4', 'Dur' = "deepskyblue4")) + 
+    labs(y = "Matchs gagnés", x = "Surface") +
+    ggtitle("Pourcentage de matchs gagnés par surface")
+ 
+ #radarchart
+ radar3 <- transpose(radar3)
+ colnames(radar3) <- radar3[1,]
+ radar3 <- radar3[-1,]
+ radar3 <-map_dfr(radar3, as.numeric)
+ 
+ radarchart(radar3,axistype=1 ,
+            seg = 10,
+            title = "Pourcentage de matchs gagnés par surface",
+            #custom polygon
+            pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=2 , 
+            #custom the grid
+            cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,100,10), cglwd=0.8,
+            #custom labels
+            vlcex=0.8 )
+ 
  
  # 6 - Résultats en fonction des adversaires --------------------------------------------------------
  
  #Nombre de matchs gagnes et perdus en focntion des adversaires au cours de sa carriere
- bilan_opp_reduit <- bilan_opp[1:30,] #sélection es 30 joueurs qu'il a le plus affronté, sinon le graphique était illisible
+ bilan_opp_reduit <- bilan_opp[1:20,] #sélection des 20 joueurs qu'il a le plus affronté
 
  bilan_opp_reduit%>%
    pivot_longer(cols = c(Won, Lost), names_to = "result", values_to = "eff") %>%
@@ -185,6 +258,13 @@
            max = 1,
            min = 0) %>%
     select('opponent','max','min','ratio') -> radar1
+ 
+ #Tableau
+ radar1 %>%
+    select("opponent","ratio") %>%
+    mutate(ratio = round(ratio*100,2)) %>%
+    rename('Matchs gagnés (%)' = ratio, Adversaire = opponent) -> tab_top3
+ formattable(tab_top3) 
  
  #barplot
  radar1 %>%
@@ -212,7 +292,7 @@
  
  # 7 - Résultats aux grands chelems --------------------------------------------------------
  
- #Nombre de matchs joués pargrand chelem
+ #Nombre de matchs joués par grand chelem
  tournoi_joueur %>%
     filter(tourney_name %in% c('Roland Garros', 'Australian Open', 'Wimbledon', 'US Open')) %>%
     group_by(tourney_name) %>%
@@ -229,7 +309,6 @@
     ggtitle("Tournois du grand chelem joués.") +
     labs(fill = "Nom du tournoi")
  
- 
  #Résultat par tournoi Grand chelem
  joueur %>%
     filter(tourney_name %in% c('Roland Garros', 'Australian Open', 'Wimbledon', 'US Open')) %>%
@@ -237,7 +316,9 @@
                              winner_id != id_joueur ~ 'Perdu')) %>%
     group_by(tourney_name, result) %>%
     summarise(N=n()) %>%
-    arrange(N) %>%
+    arrange(N) -> grand_chelem_gagne_perdu
+ 
+ grand_chelem_gagne_perdu %>%
     mutate(y2=round((N/sum(N))*100), ypos= cumsum(N)-N/2, labels= paste(N,paste0("(",y2,"%)")) )  %>%
     ggplot(mapping=aes(x=reorder(tourney_name,desc(N)), y=N, fill=result))+
     geom_col()+
@@ -248,6 +329,17 @@
     ggtitle("Matchs gagnés et matchs perdus par tournoi du grand chelem") +
     labs(fill = "Résultat")
  
+ #tableau
+ grand_chelem_gagne_perdu %>%
+    mutate(pourcentage_gagne = case_when(result == 'Gagné' ~ round(N/sum(N)*100,2)),
+           pourcentage_perdu = 100 - pourcentage_gagne) %>%
+    drop_na() %>%
+    select("tourney_name","pourcentage_gagne","pourcentage_perdu") %>%
+    rename('Matchs gagnés (%)' = pourcentage_gagne,
+           'Matchs perdus (%)' = pourcentage_perdu,
+           Tournoi = tourney_name) -> tab_grand_chelem
+ formattable(tab_grand_chelem) 
+ 
  #Résultats des grands chelems par année
  rm(annee)
  joueur %>%
@@ -257,12 +349,10 @@
                             winner_id != id_joueur ~ 'Perdu')) %>%
    select('tourney_name','tourney_id','year','result','winner_id','loser_id') -> annee
  
- View(annee)
- 
  annee %>%
    group_by(year, tourney_name, result) %>%
    summarise(N=n()) %>%
-   arrange(desc(N)) %>%
+   arrange(N) %>%
    mutate(y2=round((N/sum(N))*100), ypos= cumsum(N)-N/2, labels= paste(N,paste0("(",y2,"%)")) )  %>%
    ggplot(mapping=aes(x=year, y=N, fill=result))+
    geom_col()+
@@ -279,7 +369,7 @@
    mutate(tourney_abv=str_sub(tourney_name,1,3))%>%
    group_by(year, tourney_abv,result) %>%
    summarise(N=n()) %>%
-   arrange(desc(N)) %>%
+   arrange(N) %>%
    mutate(y2=round((N/sum(N))*100), ypos= cumsum(N)-N/2, labels= paste(N,paste0("(",y2,"%)")) )  %>%
    ggplot(mapping=aes(x=tourney_abv, y=N, fill=result))+
    geom_col()+
@@ -290,6 +380,24 @@
    geom_text(mapping = aes(y = ypos, label = N), size = 3) +
    labs(fill = "Résultat")
  
+ #tableau
+ annee %>%
+    group_by(year, tourney_name, result) %>%
+    summarise(N=n()) %>%
+    arrange(year) %>%
+    mutate(pourcentage_gagne = case_when(result == 'Gagné' ~ round(N/sum(N)*100,2)),
+           pourcentage_perdu = 100 - pourcentage_gagne,
+           Nb = sum(N)) %>%
+    drop_na() %>%
+    select("year","tourney_name","pourcentage_gagne","pourcentage_perdu","Nb") %>%
+    rename('Matchs gagnés (%)' = pourcentage_gagne,
+           'Matchs perdus (%)' = pourcentage_perdu,
+           Tournoi = tourney_name,
+           'Année' = year,
+           'Nombre de participation au tournoi' = Nb) -> tab_chelem_annee
+ tab_chelem_annee
+ formattable(tab_chelem_annee) 
+ 
  
  # 8 - Points gagnés par années et tournois -----------------------------------------
  
@@ -298,7 +406,7 @@
    filter(winner_id==id_joueur | loser_id==id_joueur) %>%
    summarise(tourney_date)%>%
    min() %>%
-   ymd() -> b
+   ymd() -> date_premier_tournoi
  
  #Parcours en carrière professionnelle
  #Points gagnés
@@ -313,46 +421,50 @@
  Graph_point
  
  #partie suivante à retravailler pour voir si on peut sortir des graphs intéressants
- 
- #ses meilleurs années (celles où il est dans top 5) 
- atp_classement %>%
-   filter(rank <=5 & player == id_joueur)-> best_annee #on a ses matchs où il gagnait et etait dans le top10 
-unique(best_annee$ranking_date)
-#OU, c'est peut-être plus logique d'utiliser la table atp_classement
- joueur%>%
-   filter(winner_rank <= 5 & winner_id == id_joueur)-> annee_meil #on a ses matchs où il gagnait et etait dans le top10 
- view(annee_meil) 
- str(annee_meil$tourney_id)
- unique(annee_meil$tourney_id)
- #les dates sont 2009;2010;2013;2014;2018;2019
- 
- #Voir quand il a perdu contre un joueur du top 5
- joueur%>%
-   filter(loser_id == id_joueur & winner_rank <= 5)-> los5
- View(los5)
- 
+
  #Nombre de points par tournoi gagné
  #roland garros rg
  joueur%>%
    filter(tourney_name == "Roland Garros" & winner_id == id_joueur) ->rga
- view(rga$winner_rank_points)
- liste<-rga$winner_rank_points #on peut faire la moyenne
- moy<-mean(liste) #3348,32 points en moy au roland garos
+ moy<-mean(rga$winner_rank_points)
+ moy #3348,32 points en moy au roland garos
  #autralie open
  joueur%>%
    filter(tourney_name == "Australian Open" & winner_id == id_joueur) ->aop
- moy_aop<-mean(aop$winner_rank_points) #3495 points en moy en Open Aust
+ moy_aop<-mean(aop$winner_rank_points)
+ moy_aop #3495 points en moy en Open Aust
  #Wimbledon
  joueur%>%
    filter(tourney_name == "Wimbledon" & winner_id == id_joueur) ->wbn
- moy_wbn<-mean(wbn$winner_rank_points) #2996,28 points en moy en winbledon
+ moy_wbn<-mean(wbn$winner_rank_points)
+ moy_wbn #2996,28 points en moy en winbledon
  #Us open
  joueur%>%
    filter(tourney_name == "US Open" & winner_id == id_joueur) ->uso
- moy_uso<-mean(uso$winner_rank_points)#3102,77 points en moy en US open
+ moy_uso<-mean(uso$winner_rank_points)
+ moy_uso #3102,77 points en moy en US open
  
  
  # 9 - Classement du joueur --------------------------------------------------------
+ 
+ 
+ #Années où le joueur est dans le top 5
+ atp_classement %>%
+    filter(rank <=5 & player == id_joueur)-> best_annee
+ annee_top5 <- unique(format(best_annee$ranking_date, format = "%Y"))
+ annee_top5 #les dates sont 2009;2010;2013;2014;2018;2019
+ 
+ #Voir quand il a perdu contre un joueur du top 5
+ joueur%>%
+    filter(loser_id == id_joueur & winner_rank <= 5) %>%
+    select("winner_name", "winner_rank","loser_name","winner_id","loser_id","tourney_name","tourney_date") -> los5
+ View(los5)
+ 
+ #Année où le joueur est dans le top 3
+ atp_classement %>%
+    filter(rank <=3 & player == id_joueur)-> best_annee_3
+ annee_top3 <- unique(format(best_annee_3$ranking_date, format = "%Y"))
+ annee_top3 #2018
  
  #Evolution au classement ATP depuis les debuts en professionnel
 
@@ -360,12 +472,21 @@ unique(best_annee$ranking_date)
     filter(player == id_joueur) -> classement_joueur #classement hebdomadaire
  
  ggplot(classement_joueur, aes(x = ranking_date, y = rank)) + 
-    labs(title = "Evolution du classement ATP de Del Potro depuis 2005", x = "Années", y = "Classement") +
+    labs(title = "Evolution du joueur au classement ATP", x = "Années", y = "Classement") +
     geom_line(col = "blue") + 
     scale_y_reverse() +
     geom_hline(yintercept = 100, col = "red")
 
-# 10-  Photo du Joueurs --------------------------------------------------------
+ #zoom lorsqu'il est dans les 50 premiers joueurs
+ classement_joueur %>%
+    filter(rank <= 50) %>%
+    ggplot(aes(x = ranking_date, y = rank)) + 
+    labs(title = "Evolution du joueur au classement ATP", x = "Années", y = "Classement") +
+    geom_line(col = "blue") + 
+    scale_y_reverse() +
+    geom_hline(yintercept = 3, col = "red")
+ 
+ # 10- Photo du joueur --------------------------------------------------------
  a<-stringr::str_replace(Firstname," ", "_") 
  b<-stringr::str_replace(Lastname," ", "_")
  lien<-paste0("https://fr.wikipedia.org/wiki/",a,"_",b)
