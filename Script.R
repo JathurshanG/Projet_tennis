@@ -18,8 +18,8 @@
  # 2 - Récupération des données du joueur selectionné --------------------------------------------
  
  #Automatisation du code pour qu'il s'adapte à tous les joueurs
- Firstname <- 'Juan Martin'
- Lastname <- 'Del Potro'
+ Firstname <- 'Jo Wilfried'
+ Lastname <- 'Tsonga'
  
  #On commence par extraire son identifiant dans la base des joueurs
  player %>% 
@@ -182,6 +182,7 @@
  ### Que 3 surfaces
  surfaces_3 <- as.data.frame(surfaces[-1,])
  surfaces_3 %>%
+    na.omit() %>%
     mutate(textpos = cumsum(N) - N/2) %>%
     ggplot(mapping = aes(x = 1, y = N, fill = Surface)) +
     geom_col(position = 'stack', width = 1) +
@@ -190,7 +191,7 @@
     theme_void() +
     geom_text(aes(y = textpos, 
                   label = paste(N, ' (', round(N/sum(N)*100,1), '%' ,')', sep = '')),
-              size=5, 
+              size=4, 
               position = position_stack(vjust=0.6)) +
     ggtitle("Nombre de matchs joués en fonction du terrain.")
  
@@ -308,6 +309,7 @@
                   size=4) +
     ggtitle("Tournois du grand chelem joués.") +
     labs(fill = "Nom du tournoi")
+ print(tournois_joueur)
  
  #Résultat par tournoi Grand chelem
  joueur %>%
@@ -486,7 +488,11 @@
  a<-stringr::str_replace(Firstname," ", "_") 
  b<-stringr::str_replace(Lastname," ", "_")
  lien<-paste0("https://fr.wikipedia.org/wiki/",a,"_",b)
- myurl <- read_html (lien)
+ myurl<-try(read_html (lien))
+ #Problème lié au prénom composé Français
+ if("try-error" %in% class(myurl)) myurl<-read_html(paste0("https://fr.wikipedia.org/wiki/",
+                                                           stringr::str_replace(Firstname," ","-"),"_",
+                                                           stringr::str_replace(Lastname," ","-")))
  mynode <- myurl %>% 
     html_node(".infobox_v2 img")
  link <- html_attr(mynode, "src")
@@ -494,5 +500,26 @@
  img<-image_read(link)
  image_ggplot(img)
 rm(a,b,myurl,mynode,lien,link) 
+
+# Theme ATP ---------------------------------------------------------------
+theme_atp_cam<-theme(
+   #masquer la grille ggplot2
+   panel.border = element_blank(),
+   panel.grid.major = element_blank(),
+   panel.grid.minor = element_blank(),
+   #choix de l'arriere plan
+   panel.background = element_rect(fill = "#A6ACAF", colour = NA),
+   plot.background = element_rect(fill = "#A6ACAF" ,colour = NA),
+   #legende si y'a
+   legend.position="bottom",legend.box = "horizontal",legend.title.align = 0,
+   legend.text = element_text(colour="white", size=10),
+   legend.title = element_text(colour="white", size=12),
+   #titre
+   plot.title = element_text(family="sans",hjust = 0.5,colour = "white",size=15,face="bold"))
+
+# Exemple sur un graph ----------------------------------------------------
+Graph_point+theme_atp_cam
+
+
 
 
