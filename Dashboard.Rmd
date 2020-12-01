@@ -1,0 +1,211 @@
+---
+title : "Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+ library(data.table)
+ library(fmsb)
+ library(rvest)
+ library(magick)
+ library(formattable) 
+ 
+```
+```{r exportation des library & base de données, echo=FALSE}
+source('export.R')
+Firstname <- 'Juan Martin'
+ Lastname <- 'Del Potro'
+ 
+ #On commence par extraire son identifiant dans la base des joueurs
+ player %>% 
+   filter(Prenom == Firstname & Nom == Lastname) %>%
+   select(id) %>% 
+   as.numeric() -> id_joueur   #numero 105 223
+ 
+ #On recupere tous les matchs joues par le joueur au cours de sa carriere
+ atp %>%
+   filter(winner_id == id_joueur | loser_id == id_joueur) -> joueur  #620 matchs en tout
+```
+
+Column {data-width=450}
+-----------------------------------------------------------------------
+
+### Joueur
+
+```{r}
+ # 10- Photo du joueur --------------------------------------------------------
+ a<-stringr::str_replace(Firstname," ", "_") 
+ b<-stringr::str_replace(Lastname," ", "_")
+ lien<-paste0("https://fr.wikipedia.org/wiki/",a,"_",b)
+ myurl<-try(read_html (lien))
+ #ProblÃ¨me liÃ© au prÃ©nom composÃ© FranÃ§ais
+ if("try-error" %in% class(myurl)) myurl<-read_html(paste0("https://fr.wikipedia.org/wiki/",
+                                                           stringr::str_replace(Firstname," ","-"),"_",
+                                                           stringr::str_replace(Lastname," ","-")))
+ mynode <- myurl %>% 
+    html_node(".infobox_v2 img")
+ link <- html_attr(mynode, "src")
+ link<-paste0("http:",link)
+ img<-image_read(link)
+ image_ggplot(img)
+
+ rm(a,b,myurl,mynode,lien,link)
+```
+
+### Informations générales
+```{r}
+
+player %>%
+   mutate(Hand=case_when(Hand=="R"~"Droitier",
+                         Hand=="L"~"Gaucher",
+                         Hand=='A'~"Ambidextre",
+                         Hand=="U"~"Inconnu")) -> a
+ 
+ a <- a[which(player$id==id_joueur),]
+ 
+ b <- fread("https://sql.sh/ressources/sql-pays/sql-pays.csv",encoding = 'UTF-8')
+ b <- b[which(b$V4==a$Nat),5]
+ 
+ Nom <- a$Prenom
+ Prenom <- a$Nom
+ DTN <- format(a$Birth,"%d %B %Y")
+ Age <- year(today())-year(a$Birth)
+ Main <- a$Hand
+ Nationalite <- b$V5
+ 
+ atp_classement%>%
+  mutate(ranking_date=ymd(ranking_date))%>%
+  arrange(desc(ranking_date)) %>%
+  filter(player==id_joueur)%>%
+  select(rank)%>%
+  slice(1L)%>%
+  as.numeric()->Class_act
+
+rm(list=c("a","b"))
+ 
+```
+
+Nom : `r Nom`
+Prénom : `r Prenom`
+Age : `r  DTN`
+Pays d'origine : `r Nationalite`
+Classement Actuel : `r Class_act`
+Main : `r Main`
+
+
+### Répartition des matchs par surface
+```{r}
+joueur %>%
+  summarise(surface) %>%
+  mutate(surface = case_when(surface == "Clay" ~ "Terre battue",
+                             surface == "Grass" ~ "Herbe",
+                             surface == "Hard" ~ "Dur"))%>%
+  group_by(surface)%>%
+  na.omit()%>%
+  summarize(N = n()) %>%
+  arrange(desc(N)) %>%
+  mutate(textpos = cumsum(N) - N/2) %>%
+  ggplot(mapping = aes(x = 1, y = N, fill = reorder(surface,N))) +
+  geom_col(position = 'stack') +
+  coord_polar(theta = 'y', start = 0) +
+  theme_void() +
+  geom_text(aes(y = textpos, 
+                label = paste(N,paste0("(",round((N/sum(N))*100),"%)"))),
+            size=4) +
+  ggtitle("Tournois du grand chelem jouÃ©s.") +
+  labs(fill = "Surface")
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+#### 2005-2020
+```{r}
+atp_classement %>%
+  filter(player == id_joueur) %>%
+ggplot(aes(x = ranking_date, y = rank)) + 
+  labs(title = "Evolution du joueur au classement ATP", x = "AnnÃ©es", y = "Classement") +
+  geom_line(col = "blue") + 
+  scale_y_reverse() +
+  geom_hline(yintercept = 100, col = "red")
+
+```
+
+#### 2005-2020
+
+```{r}
+atp_classement %>%
+   filter(player==id_joueur) %>%
+   ggplot(aes(x=ranking_date,y=points))+
+   geom_line()+
+   theme_grey()+
+   xlab("Date")+
+   ylab("Points MarquÃ©s")+
+   ggtitle(paste('Points marquées par',Lastname,'durant sa carriÃ¨re professionnelle.',sep=" "))
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+###      Matchs gagnée ou perdus sur chaque année: 2006-2019
+```{r}
+ joueur %>%
+   filter(tourney_name %in% c('Roland Garros', 'Australian Open', 'Wimbledon', 'US Open')) %>%
+   mutate(year = str_sub(tourney_id, 1, 4),
+          result =case_when(winner_id == id_joueur ~ 'Gagnée',
+                            winner_id != id_joueur ~ 'Perdu')) %>%
+   select('tourney_name','tourney_id','year','result','winner_id','loser_id')%>%
+   mutate(tourney_abv=str_sub(tourney_name,1,3))%>%
+   group_by(year, tourney_abv,result) %>%
+   summarise(N=n()) %>%
+   arrange(N) %>%
+   mutate(y2=round((N/sum(N))*100), ypos= cumsum(N)-N/2, labels= paste(N,paste0("(",y2,"%)")) )  %>%
+   ggplot(mapping=aes(x=tourney_abv, y=N, fill=result))+
+   geom_col()+
+   scale_fill_discrete(type = c('Perdu' = "tomato3", "Gagné" = "springgreen3")) +
+   facet_wrap(facets = "year", ncol  = 4)+
+   theme_bw() +
+   labs(y = "Nombre de confrontations", x = 'year') +
+   geom_text(mapping = aes(y = ypos, label = N), size = 3) +
+   labs(fill = "Résultat")
+```
+
+
+### Top 20
+```{r}
+ #Tableau des effectifs croises entre le resultat et l'adversaire
+  joueur %>%
+   select(tourney_name, surface, round, winner_name, winner_id, loser_name, loser_id, score, minutes) %>%
+   mutate(opponent = case_when(winner_id == id_joueur ~ loser_name,
+                               winner_id != id_joueur ~ winner_name),
+          result =case_when(winner_id == id_joueur ~ 'Won',
+                            winner_id != id_joueur ~ 'Lost')) %>%
+   select(-winner_name, -loser_name, -winner_id, -loser_id)  %>%
+   group_by(opponent, result) %>%
+   summarize(N = n()) %>%
+   ungroup() %>%   #penser a degrouper pour pouvoir calculer le total par la suite
+   #on arrange un peu la presentation du tableau
+   pivot_wider(names_from = result, values_from  = N) %>%
+   mutate(Total = apply(select(., Won, Lost), 1, sum, na.rm = TRUE)) %>%
+   arrange(desc(Total)) -> bilan_opp
+
+bilan_opp_reduit <- bilan_opp[1:20,] #sÃ©lection des 20 joueurs qu'il a le plus affrontÃ©
+
+ bilan_opp_reduit%>%
+   pivot_longer(cols = c(Won, Lost), names_to = "result", values_to = "eff") %>%
+   ggplot(mapping = aes(x = reorder(opponent, Total), y = eff, fill = result)) +
+   geom_col() +
+   scale_fill_discrete(type = c('Lost' = "tomato3", "Won" = "springgreen3")) +
+   coord_flip() +
+   theme_bw() +
+   labs(y = "Nombre de confrontations", x = 'Adversaires') +
+   geom_text(mapping = aes(y = -0.1, label = Total), size = 2) +
+   labs(fill = "Résultat")
+
+```
