@@ -25,7 +25,7 @@
  player %>% 
    filter(Prenom == Firstname & Nom == Lastname) %>%
    select(id) %>% 
-   as.numeric() -> id_joueur   #numero 105 223
+   as.numeric() -> id_joueur   #numero 105 223 pour Del Popo
  
  #On recupere tous les matchs joues par le joueur au cours de sa carriere
  atp %>%
@@ -43,7 +43,7 @@
                               Surface == "Clay" ~ "Terre battue",
                               Surface == "Grass" ~ "Herbe",
                               Surface == "Hard" ~ "Dur")) -> surfaces
- 
+
  #Defaites et victoires selon les opposants
  joueur %>%
    select(tourney_name, surface, round, winner_name, winner_id, loser_name, loser_id, score, minutes) %>%
@@ -115,6 +115,7 @@
  
  ### Les 4 surfaces
   surfaces %>%
+   drop_na() %>%
    mutate(textpos = cumsum(N) - N/2) %>%
    ggplot(mapping = aes(x = 1, y = N, fill = Surface)) +
    geom_col(position = 'stack', width = 1) +
@@ -134,13 +135,14 @@
    filter(winner_id == id_joueur) %>%
    group_by(surface) %>%
    summarize (G = n()) %>% #Nb matchs gagnés
+   drop_na() %>%
    rename(Surface = surface) %>%
    mutate(Surface = case_when(Surface == "Carpet" ~ "Tapis",
                               Surface == "Clay" ~ "Terre battue",
                               Surface == "Grass" ~ "Herbe",
                               Surface == "Hard" ~ "Dur")) -> matchs_gagnes
  
- match_joue_gagne <- merge(surfaces,matchs_gagnes, by = "Surface")
+ match_joue_gagne <- merge(surfaces, matchs_gagnes, by = "Surface")
 
  match_joue_gagne %>%
    mutate(max = 1, 
@@ -451,7 +453,7 @@
  atp_classement %>%
     filter(rank <=5 & player == id_joueur)-> best_annee
  annee_top5 <- unique(format(best_annee$ranking_date, format = "%Y"))
- annee_top5 #les dates sont 2009;2010;2013;2014;2018;2019
+ annee_top5 #les dates sont 2009;2010;2013;2014;2018;2019 pour Del Popo
  
  #Voir quand il a perdu contre un joueur du top 5
  joueur%>%
