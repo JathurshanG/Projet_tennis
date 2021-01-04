@@ -38,9 +38,7 @@ Column {data-width=450}
 -----------------------------------------------------------------------
 
 ### Joueur {data-height=200}
-
-
-```{r}
+```{r,fig.align = 'left'}
  # 10- Photo du joueur --------------------------------------------------------
  a<-stringr::str_replace(Firstname," ", "_") 
  b<-stringr::str_replace(Lastname," ", "_")
@@ -55,14 +53,11 @@ Column {data-width=450}
  link <- html_attr(mynode, "src")
  link<-paste0("http:",link)
  img<-image_read(link)
- image_ggplot(img)
-
+ plot(img)
  rm(a,b,myurl,mynode,lien,link)
 
 ```
 
-
-### Informations générales {data-height=150}
 
 ```{r}
 player %>%
@@ -93,11 +88,15 @@ player %>%
 rm(list=c("a","b"))
  
 ```
-Nom : `r Nom`
-Prénom : `r Prenom`
-Date de Naissance : `r DTN `
-Pays d'origine = `r Nationalite`
-Main Favorite = `r Main `
+<h3> `r Nom` `r Prenom` </h3>
+
+<right> Date de Naissance : `r DTN ` </right>
+
+<right> Pays d'origine = `r Nationalite` </right>
+
+<right> Main Favorite = `r Main ` </right>
+
+Classement Actuel : `r Class_act `
 
 ### Répartition des matchs par surface {data-height=300}
 
@@ -163,7 +162,7 @@ joueur %>%
 Column {data-width=350}
 -----------------------------------------------------------------------
 
-### Evolution de,`r Lastname`, au classement ATP"
+### Evolution de `r Lastname`  au classement ATP"
 ```{r}
 ggplotly(atp_classement %>%
   filter(player == id_joueur) %>%
@@ -176,7 +175,7 @@ ggplotly(atp_classement %>%
 
 ```
 
-### Points marquées par',`r Lastname`,'durant sa carrière professionnelle.
+### Points marquées par `r Lastname` durant sa carrière professionnelle.
 
 ```{r}
 ggplotly(atp_classement %>%
