@@ -14,7 +14,8 @@ library(tidyverse)
  library(fmsb)
  library(rvest)
  library(magick)
- library(formattable) 
+ library(formattable)
+ library(plotly)
  
 ```
 ```{r exportation des library & base de données, echo=FALSE}
@@ -89,14 +90,14 @@ player %>%
   select(rank)%>%
   slice(1L)%>%
   as.numeric()->Class_act
-
-cat("Nom :",a$Nom, "\nPrénom :", a$Prenom,"\nDate de naissance :",format(a$Birth,"%d %B %Y"),
-    "\nPays d'origine :",b$V5,"\nMain dominante :",a$Hand, "\nClassement actuel",Class_act)
-
 rm(list=c("a","b"))
  
 ```
-
+Nom : `r Nom`
+Prénom : `r Prenom`
+Date de Naissance : `r DTN `
+Pays d'origine = `r Nationalite`
+Main Favorite = `r Main `
 
 ### Répartition des matchs par surface {data-height=300}
 
@@ -162,30 +163,29 @@ joueur %>%
 Column {data-width=350}
 -----------------------------------------------------------------------
 
-###
+### Evolution de,`r Lastname`, au classement ATP"
 ```{r}
-atp_classement %>%
+ggplotly(atp_classement %>%
   filter(player == id_joueur) %>%
   ggplot(aes(x = ranking_date, y = rank)) + 
-  labs(title = paste("Evolution de",Lastname,"au classement ATP"), x = "Années", y = "Classement") +
+  labs(x = "Années", y = "Classement") +
   geom_line(col = "#000099") + 
   scale_y_reverse() +
-  geom_hline(yintercept = 100, col = "red")
+  geom_hline(yintercept = 100, col = "red"))
+
 
 ```
 
-###
+### Points marquées par',`r Lastname`,'durant sa carrière professionnelle.
 
 ```{r}
-atp_classement %>%
+ggplotly(atp_classement %>%
    filter(player==id_joueur) %>%
    ggplot(aes(x=ranking_date,y=points))+
    geom_line(col = "#000099")+
    theme_grey()+
    xlab("Date")+
-   ylab("Points Marqués")+
-   ggtitle(paste('Points marquées par',Lastname,'durant sa carrière professionnelle.',sep=" "))
-
+   ylab("Points Marqués"))
 ```
 
 Column {data-width=450}
