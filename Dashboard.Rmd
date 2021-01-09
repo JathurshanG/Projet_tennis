@@ -38,13 +38,12 @@ Column {data-width=450}
 -----------------------------------------------------------------------
 
 ### Joueur {data-height=200}
-```{r,fig.align = 'left'}
- # 10- Photo du joueur --------------------------------------------------------
+```{r}
+ # Photo du joueur --------------------------------------------------------
  a<-stringr::str_replace(Firstname," ", "_") 
  b<-stringr::str_replace(Lastname," ", "_")
  lien<-paste0("https://fr.wikipedia.org/wiki/",a,"_",b)
  myurl<-try(read_html (lien))
- #ProblÃ¨me liÃ© au prÃ©nom composÃ© FranÃ§ais
  if("try-error" %in% class(myurl)) myurl<-read_html(paste0("https://fr.wikipedia.org/wiki/",
                                                            stringr::str_replace(Firstname," ","-"),"_",
                                                            stringr::str_replace(Lastname," ","-")))
@@ -58,7 +57,7 @@ Column {data-width=450}
 
 ```
 
-
+### Informations générales {data-height=150}
 ```{r}
 player %>%
    mutate(Hand=case_when(Hand=="R"~"Droitier",
@@ -88,17 +87,17 @@ player %>%
 rm(list=c("a","b"))
  
 ```
-<h3> `r Nom` `r Prenom` </h3>
+<h4> `r Nom` `r Prenom` </h4>
 
-<right> Date de Naissance : `r DTN ` </right>
+Date de Naissance : `r DTN `
 
-<right> Pays d'origine = `r Nationalite` </right>
+Pays d'origine : `r Nationalite` 
 
-<right> Main Favorite = `r Main ` </right>
+Main Favorite : `r Main `
 
 Classement Actuel : `r Class_act `
 
-### Répartition des matchs par surface {data-height=300}
+### Répartition des matchs par surface. {data-height=300}
 
 ```{r}
 joueur %>%
@@ -114,8 +113,8 @@ joueur %>%
   ggplot(mapping = aes(x = 1, y = N, fill = reorder(surface,N))) +
   geom_col(position = 'stack') +
   coord_polar(theta = 'y', start = 0) +
-  scale_fill_discrete(type = c('Terre battue' = '#990000', 'Herbe' = 'chartreuse3', 'Dur' = "cadetblue4")) + 
-  theme_void() +
+  scale_fill_discrete(type = c('Terre battue' = 'tomato3', 'Herbe' = 'chartreuse3', 'Dur' = 'cadetblue3')) + 
+  theme_void(base_size = 14) +
   geom_text(aes(y = textpos, 
                 label = paste(N,paste0("(",round((N/sum(N))*100),"%)"))),
             size=4) +
@@ -123,7 +122,7 @@ joueur %>%
 ```
 
 
-### Matchs gagnés par surfaces {data-height=100}
+### Matchs gagnés par surface. {data-height=100}
 
 ```{r}
 joueur %>%
@@ -162,39 +161,42 @@ joueur %>%
 Column {data-width=350}
 -----------------------------------------------------------------------
 
-### Evolution de `r Lastname`  au classement ATP"
+### Evolution de `r Lastname`  au classement ATP.
 ```{r}
 ggplotly(atp_classement %>%
   filter(player == id_joueur) %>%
   ggplot(aes(x = ranking_date, y = rank)) + 
   labs(x = "Années", y = "Classement") +
-  geom_line(col = "#000099") + 
+  geom_line(col = "black") + 
   scale_y_reverse() +
+  theme_classic(base_size = 10) +
+  theme( axis.title.x = element_text(size=8), axis.title.y = element_text(size=8)) +
   geom_hline(yintercept = 100, col = "red"))
 
 
 ```
 
-### Points marquées par `r Lastname` durant sa carrière professionnelle.
+### Points marqués par `r Lastname` durant sa carrière professionnelle.
 
 ```{r}
 ggplotly(atp_classement %>%
    filter(player==id_joueur) %>%
    ggplot(aes(x=ranking_date,y=points))+
-   geom_line(col = "#000099")+
-   theme_grey()+
-   xlab("Date")+
-   ylab("Points Marqués"))
+   theme_classic(base_size = 10) +
+   theme( axis.title.x = element_text(size=8), axis.title.y = element_text(size=8)) +
+   geom_line(col = "black")+
+   xlab("Années")+
+   ylab("Points Marqués")) 
 ```
 
 Column {data-width=450}
 -----------------------------------------------------------------------
-###      Matchs gagnée ou perdus par tournoi chaque année
+###      Matchs gagnés ou perdus par tournoi du grand chelem chaque année.
 ```{r}
  joueur %>%
    filter(tourney_name %in% c('Roland Garros', 'Australian Open', 'Wimbledon', 'US Open')) %>%
    mutate(year = str_sub(tourney_id, 1, 4),
-          result =case_when(winner_id == id_joueur ~ 'Gagnée',
+          result =case_when(winner_id == id_joueur ~ 'Gagné',
                             winner_id != id_joueur ~ 'Perdu')) %>%
    select('tourney_name','tourney_id','year','result','winner_id','loser_id')%>%
    mutate(tourney_abv=str_sub(tourney_name,1,3))%>%
@@ -206,22 +208,22 @@ Column {data-width=450}
    geom_col()+
    scale_fill_discrete(type = c('Perdu' = "tomato3", "Gagné" = "chartreuse3")) +
    facet_wrap(facets = "year", ncol  = 4)+
-   theme_bw() +
-   labs(y = "Nombre de confrontations", x = 'year') +
+   theme_bw(base_size = 12) +
+   labs(y = "Nombre de confrontations", x = 'Années') +
    geom_text(mapping = aes(y = ypos, label = N), size = 3) +
    labs(fill = "Résultat")
 ```
 
 
-### Résultats face à ses 20 adversaires les plus fréquents 
+### Résultats face à ses 20 adversaires les plus fréquents.
 ```{r}
  #Tableau des effectifs croises entre le resultat et l'adversaire
  joueur %>%
    select(tourney_name, surface, round, winner_name, winner_id, loser_name, loser_id, score, minutes) %>%
    mutate(opponent = case_when(winner_id == id_joueur ~ loser_name,
                                winner_id != id_joueur ~ winner_name),
-          result =case_when(winner_id == id_joueur ~ 'Won',
-                            winner_id != id_joueur ~ 'Lost')) %>%
+          result =case_when(winner_id != id_joueur ~ 'Won',
+                            winner_id == id_joueur ~ 'Lost')) %>%
    select(-winner_name, -loser_name, -winner_id, -loser_id)  %>%
    group_by(opponent, result) %>%
    summarize(N = n()) %>%
@@ -237,9 +239,9 @@ bilan_opp_reduit <- bilan_opp[1:20,] #Selection des 20 joueurs qu'il a le plus a
    pivot_longer(cols = c(Won, Lost), names_to = "result", values_to = "eff") %>%
    ggplot(mapping = aes(x = reorder(opponent, Total), y = eff, fill = result)) +
    geom_col() +
-   scale_fill_discrete(type = c('Lost' = "tomato3", "Won" = "chartreuse3")) +
+   scale_fill_discrete(type = c("Won" = "chartreuse3",'Lost' = "tomato3"), labels=c('Perdu','Gagné')) +
    coord_flip() +
-   theme_bw() +
+   theme_bw(base_size = 12) +
    labs(y = "Nombre de confrontations", x = 'Adversaires') +
    geom_text(mapping = aes(y = -0.1, label = Total), size = 2) +
    labs(fill = "Résultat")
