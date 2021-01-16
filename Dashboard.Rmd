@@ -19,7 +19,7 @@ library(tidyverse)
  
 ```
 ```{r exportation des library & base de données, echo=FALSE}
-source('export.R')
+source('Export.R')
  Firstname <- 'Juan Martin'
  Lastname <- 'Del Potro'
  
@@ -34,10 +34,10 @@ source('export.R')
    filter(winner_id == id_joueur | loser_id == id_joueur) -> joueur  #620 matchs en tout
 ```
 
-Column {data-width=450}
+Column {data-width=375}
 -----------------------------------------------------------------------
 
-### Joueur {data-height=200}
+### Joueur {data-height=180}
 ```{r identité du Joueur, echo=F}
  # Photo du joueur --------------------------------------------------------
  a<-stringr::str_replace(Firstname," ", "_") 
@@ -94,7 +94,7 @@ Main Favorite : `r Main `
 
 Classement Actuel : `r Class_act `
 
-### Répartition des matchs par surface. {data-height=300}
+### Répartition des matchs par surface. {data-height=280}
 ```{r Graphique_Terre, echo=FALSE}
 joueur %>%
   summarise(surface) %>%
@@ -118,7 +118,7 @@ joueur %>%
 ```
 
 
-### Matchs gagnés par surface. {data-height=100}
+### Matchs gagnés par surface. {data-height=115}
 
 ```{r Graphique_Tab, echo=F}
 joueur %>%
@@ -154,7 +154,7 @@ joueur %>%
  
 ```
 
-Column {data-width=350}
+Column {data-width=370}
 -----------------------------------------------------------------------
 
 ### Evolution de `r Lastname`  au classement ATP.
@@ -183,7 +183,7 @@ ggplotly(atp_classement %>%
    ylab("Points Marqués")) 
 ```
 
-Column {data-width=450}
+Column {data-width=410}
 -----------------------------------------------------------------------
 ###      Matchs gagnés ou perdus par tournoi du grand chelem chaque année.
 ```{r Match_Gag, echo=F}
