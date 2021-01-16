@@ -25,11 +25,11 @@
  player %>% 
    filter(Prenom == Firstname & Nom == Lastname) %>%
    select(id) %>% 
-   as.numeric() -> id_joueur   #numero 105 223 pour Del Popo
+   as.numeric() -> id_joueur 
  
  #On recupere tous les matchs joues par le joueur au cours de sa carriere
  atp %>%
-   filter(winner_id == id_joueur | loser_id == id_joueur) -> joueur  #620 matchs en tout
+   filter(winner_id == id_joueur | loser_id == id_joueur) -> joueur
  
  # 3 - Préparation des jeux de données utilisés pour les graphs ----------------------------------
  
@@ -79,7 +79,7 @@
  
  # 4 - Identité et caractéristiques du joueur --------------------------------------------------
  
- #Affichage de l'identité
+ #Affichage de l'identité dans la console
  
  player %>%
    mutate(Hand=case_when(Hand=="R"~"Droitier",
@@ -129,12 +129,11 @@
    ggtitle("Nombre de matchs joués en fonction du terrain.")
  
  
- #Radarchart du pourcentage de matchs gagné par sufaces
- # On récupère les matchs gagnés en fonction de la surface
+ # Matchs gagnés en fonction de la suface
  joueur %>%
    filter(winner_id == id_joueur) %>%
    group_by(surface) %>%
-   summarize (G = n()) %>% #Nb matchs gagnés
+   summarize (G = n()) %>% 
    drop_na() %>%
    rename(Surface = surface) %>%
    mutate(Surface = case_when(Surface == "Carpet" ~ "Tapis",
@@ -313,7 +312,7 @@
     labs(fill = "Nom du tournoi")
  print(tournois_joueur)
  
- #Résultat par tournoi Grand chelem
+ #Résultats par tournoi du grand chelem
  joueur %>%
     filter(tourney_name %in% c('Roland Garros', 'Australian Open', 'Wimbledon', 'US Open')) %>%
     mutate(result =case_when(winner_id == id_joueur ~ 'Gagné',
@@ -421,30 +420,28 @@
    ylab("Points Marqués")+
    ggtitle(paste('Points marqués par',Lastname,'durant sa carrière professionnelle.',sep=" "))
  
- #partie suivante à retravailler pour voir si on peut sortir des graphs intéressants
 
  #Nombre de points par tournoi gagné
- #roland garros rg
+ #roland garros
  joueur%>%
    filter(tourney_name == "Roland Garros" & winner_id == id_joueur) ->rga
  moy<-mean(rga$winner_rank_points)
- moy #3348,32 points en moy au roland garos
+ moy
  #autralie open
  joueur%>%
    filter(tourney_name == "Australian Open" & winner_id == id_joueur) ->aop
  moy_aop<-mean(aop$winner_rank_points)
- moy_aop #3495 points en moy en Open Aust
+ moy_aop 
  #Wimbledon
  joueur%>%
    filter(tourney_name == "Wimbledon" & winner_id == id_joueur) ->wbn
  moy_wbn<-mean(wbn$winner_rank_points)
- moy_wbn #2996,28 points en moy en winbledon
+ moy_wbn
  #Us open
  joueur%>%
    filter(tourney_name == "US Open" & winner_id == id_joueur) ->uso
  moy_uso<-mean(uso$winner_rank_points)
- moy_uso #3102,77 points en moy en US open
- 
+ moy_uso
  
  # 9 - Classement du joueur --------------------------------------------------------
  
@@ -453,7 +450,7 @@
  atp_classement %>%
     filter(rank <=5 & player == id_joueur)-> best_annee
  annee_top5 <- unique(format(best_annee$ranking_date, format = "%Y"))
- annee_top5 #les dates sont 2009;2010;2013;2014;2018;2019 pour Del Popo
+ annee_top5 
  
  #Voir quand il a perdu contre un joueur du top 5
  joueur%>%
@@ -464,7 +461,7 @@
  atp_classement %>%
     filter(rank <=3 & player == id_joueur)-> best_annee_3
  annee_top3 <- unique(format(best_annee_3$ranking_date, format = "%Y"))
- annee_top3 #2018
+ annee_top3
  
  #Evolution au classement ATP depuis les debuts en professionnel
 
@@ -486,7 +483,7 @@
     scale_y_reverse() +
     geom_hline(yintercept = 3, col = "red")
  
- # 10- Photo du joueur --------------------------------------------------------
+# 10 - Photo du joueur --------------------------------------------------------
  a<-stringr::str_replace(Firstname," ", "_") 
  b<-stringr::str_replace(Lastname," ", "_")
  lien<-paste0("https://fr.wikipedia.org/wiki/",a,"_",b)
@@ -501,10 +498,10 @@
  link<-paste0("http:",link)
  img<-image_read(link)
  image_ggplot(img)
-rm(a,b,myurl,mynode,lien,link) 
+ rm(a,b,myurl,mynode,lien,link) 
 
-# Theme ATP ---------------------------------------------------------------
-theme_atp_cam<-theme(
+# 11 - Theme ATP ---------------------------------------------------------------
+ theme_atp_cam<-theme(
    #masquer la grille ggplot2
    panel.border = element_blank(),
    panel.grid.major = element_blank(),
@@ -512,15 +509,15 @@ theme_atp_cam<-theme(
    #choix de l'arriere plan
    panel.background = element_rect(fill = "#A6ACAF", colour = NA),
    plot.background = element_rect(fill = "#A6ACAF" ,colour = NA),
-   #legende si y'a
+   #legende
    legend.position="bottom",legend.box = "horizontal",legend.title.align = 0,
    legend.text = element_text(colour="white", size=10),
    legend.title = element_text(colour="white", size=12),
    #titre
    plot.title = element_text(family="sans",hjust = 0.5,colour = "white",size=15,face="bold"))
 
-# Exemple sur un graph ----------------------------------------------------
-Graph_point+theme_atp_cam
+ # Exemple sur un graph
+ Graph_point+theme_atp_cam
 
 
 

@@ -33,48 +33,48 @@ atp <- reduce(.x = lst_tib, .f = bind_rows)
 head(atp)
 
 
-# Importation des résultats de match (double) ---------------------------------------------------------
-lst <- list.files(path = "tennis_atp")
-lst_data <- grep(pattern = "^atp_matches_doubles_[[:digit:]]{4}.csv$", x = lst, value = TRUE)
-lst_names <- paste('atp_double', str_extract(string = lst_data, pattern = "[[:digit:]]{4}"), sep = "")
-lst_tib <- map(.x = lst_data, function (x) read_csv(paste("tennis_atp/", x, sep = "")))
-names(lst_tib) <- lst_names
-atp_double <- reduce(.x = lst_tib, .f = bind_rows)
-head(atp_double)
+# # Importation des résultats de match (double) ---------------------------------------------------------
+# lst <- list.files(path = "tennis_atp")
+# lst_data <- grep(pattern = "^atp_matches_doubles_[[:digit:]]{4}.csv$", x = lst, value = TRUE)
+# lst_names <- paste('atp_double', str_extract(string = lst_data, pattern = "[[:digit:]]{4}"), sep = "")
+# lst_tib <- map(.x = lst_data, function (x) read_csv(paste("tennis_atp/", x, sep = "")))
+# names(lst_tib) <- lst_names
+# atp_double <- reduce(.x = lst_tib, .f = bind_rows)
+# head(atp_double)
 
 
-# Importation base futures ----------------------------------------------------------------------------
-lst <- list.files(path = "tennis_atp")
-lst_data <- grep(pattern = "^atp_matches_futures_[[:digit:]]{4}.csv$", x = lst, value = TRUE)
-lst_names <- paste('atp_futures', str_extract(string = lst_data, pattern = "[[:digit:]]{4}"), sep = "")
-lst_tib <- map(.x = lst_data, function (x) read_csv(paste("tennis_atp/", x, sep = ""),col_types = cols(tourney_level = col_character())))
-names(lst_tib) <- lst_names
-atp_futures <- reduce(.x = lst_tib, .f = bind_rows)
-head(atp_futures)
+# # Importation base futures ----------------------------------------------------------------------------
+# lst <- list.files(path = "tennis_atp")
+# lst_data <- grep(pattern = "^atp_matches_futures_[[:digit:]]{4}.csv$", x = lst, value = TRUE)
+# lst_names <- paste('atp_futures', str_extract(string = lst_data, pattern = "[[:digit:]]{4}"), sep = "")
+# lst_tib <- map(.x = lst_data, function (x) read_csv(paste("tennis_atp/", x, sep = ""),col_types = cols(tourney_level = col_character())))
+# names(lst_tib) <- lst_names
+# atp_futures <- reduce(.x = lst_tib, .f = bind_rows)
+# head(atp_futures)
 
 
-# Importation base qual_chall -------------------------------------------------------------------------
-lst <- list.files(path = "tennis_atp")
-lst_data <- grep(pattern = "^atp_matches_qual_chall_[[:digit:]]{4}.csv$", x = lst, value = TRUE)
-lst_names <- paste('atp_qual_chall_', str_extract(string = lst_data, pattern = "[[:digit:]]{4}"), sep = "")
-lst_tib <- map(.x = lst_data, function (x) read_csv(paste("tennis_atp/", x, sep = ""),
-                                                    col_types = cols(best_of = col_double(),draw_size = col_double(), 
-                                                                     loser_age = col_double(),loser_ht = col_double(), 
-                                                                     loser_id = col_double(),  loser_name = col_character(), 
-                                                                     loser_seed = col_character(), match_num = col_double(), 
-                                                                     round = col_character(), score = col_character(),
-                                                                     surface = col_character(),tourney_date = col_double(), 
-                                                                     tourney_id = col_character(),tourney_level = col_character(),
-                                                                     tourney_name = col_character(), winner_age = col_double(),
-                                                                     winner_hand = col_character(), winner_ht = col_double(),
-                                                                     winner_id = col_double(), winner_ioc = col_character(),
-                                                                     winner_name = col_character(), winner_seed = col_character())))
+# # Importation base qual_chall -------------------------------------------------------------------------
+# lst <- list.files(path = "tennis_atp")
+# lst_data <- grep(pattern = "^atp_matches_qual_chall_[[:digit:]]{4}.csv$", x = lst, value = TRUE)
+# lst_names <- paste('atp_qual_chall_', str_extract(string = lst_data, pattern = "[[:digit:]]{4}"), sep = "")
+# lst_tib <- map(.x = lst_data, function (x) read_csv(paste("tennis_atp/", x, sep = ""),
+#                                                     col_types = cols(best_of = col_double(),draw_size = col_double(), 
+#                                                                      loser_age = col_double(),loser_ht = col_double(), 
+#                                                                      loser_id = col_double(),  loser_name = col_character(), 
+#                                                                      loser_seed = col_character(), match_num = col_double(), 
+#                                                                      round = col_character(), score = col_character(),
+#                                                                      surface = col_character(),tourney_date = col_double(), 
+#                                                                      tourney_id = col_character(),tourney_level = col_character(),
+#                                                                      tourney_name = col_character(), winner_age = col_double(),
+#                                                                      winner_hand = col_character(), winner_ht = col_double(),
+#                                                                      winner_id = col_double(), winner_ioc = col_character(),
+#                                                                      winner_name = col_character(), winner_seed = col_character())))
 
-#les variables présentent des WC dans la base de données, a ce titre, j'ai décider de configurer chacune des variable,
-#en décidant de leur symboles
-names(lst_tib) <- lst_names
-atp_qual_chall <- reduce(.x = lst_tib, .f = bind_rows)
-head(atp_qual_chall)
+# #les variables présentent des WC dans la base de données, a ce titre, j'ai décider de configurer chacune des variable,
+# #en décidant de leur symboles
+# names(lst_tib) <- lst_names
+# atp_qual_chall <- reduce(.x = lst_tib, .f = bind_rows)
+# head(atp_qual_chall)
 
 
 # Importation base classement -------------------------------------------------------------------------
@@ -92,6 +92,6 @@ colnames(atp_rankings_current) <- colnames(atp_classement)
 atp_classement %>%
   bind_rows(atp_rankings_current) %>%
   mutate(ranking_date = ymd(ranking_date))->atp_classement
-#verif Ok
-max(atp_classement$ranking_date)
+
+# max(atp_classement$ranking_date)
 #la valeur max est le 09 mars 2020, la totalité des variables a été ajouté

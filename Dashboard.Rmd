@@ -20,7 +20,7 @@ library(tidyverse)
 ```
 ```{r exportation des library & base de données, echo=FALSE}
 source('export.R')
-Firstname <- 'Juan Martin'
+ Firstname <- 'Juan Martin'
  Lastname <- 'Del Potro'
  
  #On commence par extraire son identifiant dans la base des joueurs
@@ -38,7 +38,7 @@ Column {data-width=450}
 -----------------------------------------------------------------------
 
 ### Joueur {data-height=200}
-```{r identité du JOueur, echo=F}
+```{r identité du Joueur, echo=F}
  # Photo du joueur --------------------------------------------------------
  a<-stringr::str_replace(Firstname," ", "_") 
  b<-stringr::str_replace(Lastname," ", "_")
@@ -162,14 +162,12 @@ Column {data-width=350}
 ggplotly(atp_classement %>%
   filter(player == id_joueur) %>%
   ggplot(aes(x = ranking_date, y = rank)) + 
-  labs(x = "Années", y = "Classement") +
+  labs(x = "Années", y = "Classement")+
   geom_line(col = "black") + 
-  scale_y_reverse() +
   theme_classic(base_size = 10) +
-  theme( axis.title.x = element_text(size=8), axis.title.y = element_text(size=8)) +
-  geom_hline(yintercept = 100, col = "red"))
-
-
+  scale_y_reverse(breaks=c(1500,1000,500,50)) +
+  theme( axis.title = element_text(size=8), axis.title.y = element_text(size=8)) +
+  geom_hline(yintercept = 50, col = "red"))
 ```
 
 ### Points marqués par `r Lastname` durant sa carrière professionnelle.
@@ -235,7 +233,7 @@ bilan_opp_reduit <- bilan_opp[1:20,] #Selection des 20 joueurs qu'il a le plus a
    pivot_longer(cols = c(Won, Lost), names_to = "result", values_to = "eff") %>%
    ggplot(mapping = aes(x = reorder(opponent, Total), y = eff, fill = result)) +
    geom_col() +
-   scale_fill_discrete(type = c("Won" = "chartreuse3",'Lost' = "tomato3"), labels=c('Perdu','Gagné')) +
+   scale_fill_discrete(type = c("Won" = "chartreuse3","Lost"= "tomato3"), labels=c('Perdu','Gagné')) +
    coord_flip() +
    theme_bw(base_size = 12) +
    labs(y = "Nombre de confrontations", x = 'Adversaires') +
